@@ -126,6 +126,28 @@ Las capturas de pantalla que demuestran el funcionamiento completo del sistema s
 
 ---
 
+## Decisiones Técnicas
+
+Durante el desarrollo del sistema se tomaron las siguientes decisiones técnicas:
+
+**¿Por qué diseñaron las tablas así?**
+- Se crearon 3 tablas separadas (`usuarios`, `salas`, `reservas`) siguiendo el principio de normalización de bases de datos para evitar redundancia de datos.
+- La tabla `reservas` actúa como tabla intermedia que relaciona usuarios con salas, permitiendo un modelo flexible donde un usuario puede hacer múltiples reservas y una sala puede ser reservada por múltiples usuarios en diferentes horarios.
+- Se agregó el campo `estado` en reservas para poder cancelar sin eliminar el registro histórico, manteniendo trazabilidad.
+
+**¿Cómo manejaron los errores?**
+- Se implementaron bloques `try/except/finally` en todas las rutas para capturar excepciones de base de datos, validaciones de formulario y errores inesperados.
+- El bloque `finally` garantiza que las conexiones a la base de datos siempre se cierren, incluso si ocurre un error, evitando fugas de conexiones.
+- Se muestran mensajes de error amigables al usuario en la interfaz (cuadros rojos) sin exponer detalles técnicos sensibles.
+- Se validan los datos antes de insertarlos (campos vacíos, horarios lógicos, conflictos de reservas).
+
+**¿Qué fue lo más difícil de implementar?**
+- **La validación de conflictos de horarios:** Fue necesario crear una consulta SQL que detecte si una nueva reserva se solapa con reservas existentes. La lógica `NOT (hora_fin <= hora_inicio_nueva OR hora_inicio >= hora_fin_nueva)` requirió análisis cuidadoso para cubrir todos los casos de solapamiento.
+- **La tarea pesada bloqueante:** Inicialmente los logs no aparecían en Docker. Se tuvo que configurar `PYTHONUNBUFFERED=1` y `python -u` en el Dockerfile para forzar la salida inmediata de los `print()`.
+- **Manejo de variables de entorno:** Asegurar que las credenciales nunca se escribieran en el código y siempre se pasaran como variables de entorno al contenedor requirió atención especial en el flujo de despliegue.
+
+---
+
 ## Autor
 
 **Zeus Samael Aguirre Martinez**  
